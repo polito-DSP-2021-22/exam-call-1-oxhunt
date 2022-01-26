@@ -1,0 +1,888 @@
+openapi: 3.0.1
+info:
+  title: Todo Manager API
+  description: An API for the Todo Manager service
+  version: "1.0"
+servers:
+- url: /
+paths:
+  /api/tasks/{tid}/images/{iid}:
+    get:
+      tags:
+      - images
+      description: Used to get an image from a task. Can only be performed by either
+        an owner or an assignee of that task
+      operationId: getImageFromTask
+      parameters:
+      - name: Accept
+        in: header
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - image/png
+          - image/jpeg
+          - image/gif
+      - name: tid
+        in: path
+        description: Task Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      - name: iid
+        in: path
+        description: Image Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                $ref: '#/components/schemas/image'
+            image/gif:
+              schema:
+                $ref: '#/components/schemas/image'
+            image/png:
+              schema:
+                $ref: '#/components/schemas/image'
+        "401":
+          description: You must be logged in to perform this action
+        "404":
+          description: Task Not Found
+        "415":
+          description: Unsupported Accept header
+      x-swagger-router-controller: Images
+    delete:
+      tags:
+      - images
+      description: Used to delete an image from a task. Can only be performed by an
+        owner of that task
+      operationId: deleteImageFromTask
+      parameters:
+      - name: tid
+        in: path
+        description: Task Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      - name: iid
+        in: path
+        description: Image Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be logged in to perform this action
+        "404":
+          description: Task Not Found
+      x-swagger-router-controller: Images
+  /api/tasks/{tid}/images:
+    post:
+      tags:
+      - images
+      description: "Used to attach an image to task. It does not create a new task\
+        \ if another image equal to it, is already attached, it doesn't attach it(idempotent)"
+      operationId: addImageToTask
+      parameters:
+      - name: tid
+        in: path
+        description: Task Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/tid_images_body'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: You must be logged in to perform this action
+        "404":
+          description: Task Not Found
+      x-swagger-router-controller: Images
+  /api/users/{uid}:
+    get:
+      tags:
+      - users
+      description: "returns an object containing a registered User, only a logged\
+        \ user can perform it"
+      operationId: getUserById
+      parameters:
+      - name: uid
+        in: path
+        description: Id of the user
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/assignee'
+        "401":
+          description: You must be logged in to perform this action
+        "404":
+          description: Not Found
+      x-swagger-router-controller: Users
+    post:
+      tags:
+      - users
+      description: "used to set the active task for a given user, only an assignee\
+        \ of the task can perform it. If no request body is sent, the active task\
+        \ is set to NULL"
+      operationId: setActiveTask
+      parameters:
+      - name: uid
+        in: path
+        description: Id of the user
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users_uid_body'
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Only logged in users to whom this task is assigned to can perform this operation
+        "404":
+          description: User or task Not found
+        "409":
+          description: The task is already active for another user
+      x-swagger-router-controller: Users
+  /api/users:
+    get:
+      tags:
+      - users
+      description: "returns an object containing all the Users in the service, only\
+        \ a logged user can perform it"
+      operationId: getUsers
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/assignees'
+        "401":
+          description: You must be logged in to perform this action
+      x-swagger-router-controller: Users
+  /api/tasks/assignments:
+    post:
+      tags:
+      - assignments
+      description: Used to automatically and evenly assign the tasks owned by the
+        currently logged user
+      operationId: autoAssign
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: You must be logged in to perform this action
+      x-swagger-router-controller: Assignments
+  /api/tasks/{tid}/assignees/{aid}:
+    post:
+      tags:
+      - assignees
+      description: Used by the owner of the task to add a new assignee to it
+      operationId: addNewAssigneeToTask
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task to which an assignee needs to be added
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      - name: aid
+        in: path
+        description: Id of the assignee who is assigned a task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be the owner of this task to perform this operation
+        "404":
+          description: Task Not found
+      x-swagger-router-controller: Assignees
+    delete:
+      tags:
+      - assignees
+      description: Used by the owner of the task to delete an assignee from it
+      operationId: detachAssignee
+      parameters:
+      - name: aid
+        in: path
+        description: Id of the assignee
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      - name: tid
+        in: path
+        description: Id of the task from which an assignee needs to be removed
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be the owner of this task to perform this operation
+        "404":
+          description: Not found
+      x-swagger-router-controller: Assignees
+  /api/tasks/{tid}/assignees:
+    get:
+      tags:
+      - assignees
+      description: Used by the owner of a task to get the list of assignees to which
+        it is assigned
+      operationId: getListAssignees
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/assignees'
+        "401":
+          description: You must be the owner of the task to perform this action
+        "404":
+          description: Task Not Found
+      x-swagger-router-controller: Assignees
+  /api/tasks/{tid}:
+    get:
+      tags:
+      - tasks
+      description: returns a task with the given task id
+      operationId: getTaskById
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/task'
+        "404":
+          description: Not found
+      x-swagger-router-controller: Tasks
+    put:
+      tags:
+      - tasks
+      description: "updates a task with the given task id, can only be performed by\
+        \ its owner"
+      operationId: updateTask
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/newTask'
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be the owner of this task to perform this action
+        "404":
+          description: Not found
+      x-swagger-router-controller: Tasks
+    post:
+      tags:
+      - tasks
+      description: "used to set a task status to completed, only an assignee of the\
+        \ task can perform it"
+      operationId: completeTask
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be an assignee of this task to perform this operation
+        "404":
+          description: Not found
+      x-swagger-router-controller: Tasks
+    delete:
+      tags:
+      - tasks
+      description: "deletes a task with the given task id, can only be done by its\
+        \ owner"
+      operationId: deleteTaskById
+      parameters:
+      - name: tid
+        in: path
+        description: Id of the task
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: You must be the owner of this task to perform this action
+      x-swagger-router-controller: Tasks
+  /api/tasks:
+    get:
+      tags:
+      - tasks
+      description: returns an object containing all the tasks the current user is
+        authorized to view
+      operationId: getTasks
+      parameters:
+      - name: page
+        in: query
+        description: Used to select the page number requested. The first page is page
+          1
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+      - name: filter
+        in: query
+        description: "Used to select the type of tasks(owned by the user, assigned\
+          \ to the user or only the public ones)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - owned
+          - assigned
+          - public
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tasksPage'
+      x-swagger-router-controller: Tasks
+    post:
+      tags:
+      - tasks
+      description: Used to create a new task as specified in the request body. It
+        does not create a new task if another task with the exact same attributes
+        except id already exists
+      operationId: createTask
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/api_tasks_body'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+                schema:
+                  $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: You must be logged in to perform this action
+      x-swagger-router-controller: Tasks
+  /api/users/session:
+    get:
+      tags:
+      - users
+      description: "If there  exists a currently active session for the jwt cookie sent, the user info is returned"
+      operationId: checkAuthorization
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "401":
+          description: Unauthorized
+      x-swagger-router-controller: Users
+    delete:
+      tags:
+      - users
+      description: "used to either logout, works only if the request has a valid jwt cookie"
+      operationId: logout
+      parameters: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      x-swagger-router-controller: Users
+    post:
+      tags:
+      - users
+      description: "used to either login, login is performed with the credentials sent in the body"
+      operationId: login
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/loginInfo'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "401":
+          description: Unauthorized
+      x-swagger-router-controller: Users
+  /api/:
+    get:
+      description: Retrieves the index containing the links to Important Resources
+      operationId: getIndex
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/index'
+      x-swagger-router-controller: Default
+components:
+  schemas:
+    image:
+      type: string
+      format: binary
+    imageLink:
+      type: object
+      properties:
+        href:
+          type: string
+        rel:
+          type: string
+        name:
+          type: string
+      example:
+        rel: rel
+        name: name
+        href: href
+    links:
+      type: array
+      description: Used to validate the format of the links sent alongside the resources
+      format: uri
+      items:
+        $ref: '#/components/schemas/links_inner'
+    index:
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/links'
+      description: Describes the format of the index object
+      example:
+        links:
+        - rel: rel
+          href: http://example.com/aeiou
+        - rel: rel
+          href: http://example.com/aeiou
+    tasksPage:
+      type: object
+      properties:
+        totalItems:
+          minimum: 1
+          type: integer
+        totalPages:
+          minimum: 1
+          type: integer
+        pageNumber:
+          minimum: 1
+          type: integer
+        pageItems:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: '#/components/schemas/task'
+        links:
+          $ref: '#/components/schemas/links'
+      description: Describes the format of the task pages sent by the server
+      example:
+        totalItems: 1
+        pageNumber: 1
+        totalPages: 1
+        pageItems:
+        - important: false
+          owner:
+            name: name
+            links:
+            - rel: rel
+              href: http://example.com/aeiou
+            - rel: rel
+              href: http://example.com/aeiou
+            aid: 0
+            email: ""
+          private: true
+          images:
+          - rel: rel
+            name: name
+            href: href
+          - rel: rel
+            name: name
+            href: href
+          description: description
+          project: Personal
+          links:
+          - rel: rel
+            href: http://example.com/aeiou
+          - rel: rel
+            href: http://example.com/aeiou
+          completed: false
+          deadline: 2000-01-23T04:56:07.000+00:00
+          tid: 0
+        - important: false
+          owner:
+            name: name
+            links:
+            - rel: rel
+              href: http://example.com/aeiou
+            - rel: rel
+              href: http://example.com/aeiou
+            aid: 0
+            email: ""
+          private: true
+          images:
+          - rel: rel
+            name: name
+            href: href
+          - rel: rel
+            name: name
+            href: href
+          description: description
+          project: Personal
+          links:
+          - rel: rel
+            href: http://example.com/aeiou
+          - rel: rel
+            href: http://example.com/aeiou
+          completed: false
+          deadline: 2000-01-23T04:56:07.000+00:00
+          tid: 0
+        links:
+        - rel: rel
+          href: http://example.com/aeiou
+        - rel: rel
+          href: http://example.com/aeiou
+    newTask:
+      required:
+      - description
+      type: object
+      properties:
+        description:
+          maxLength: 160
+          type: string
+        important:
+          type: integer
+          minimum: 0
+          maximum: 1
+          default: false
+        private:
+          type: integer
+          minimum: 0
+          maximum: 1
+          default: true
+        project:
+          type: string
+          enum:
+          - Personal
+          - DSP_Project
+          - WA1_Project
+          - WA2_Project
+          - ""
+        deadline:
+          type: string
+          format: date-time
+      description: Used to validate the task object received during either a task
+        creation or a task update
+    task:
+      required:
+      - description
+      - owner
+      - tid
+      type: object
+      properties:
+        tid:
+          minimum: 0
+          type: integer
+        description:
+          maxLength: 160
+          type: string
+        important:
+          type: integer
+          minimum: 0
+          maximum: 1
+          default: false
+        private:
+          type: integer
+          minimum: 0
+          maximum: 1
+          default: true
+        project:
+          type: string
+          enum:
+          - Personal
+          - DSP_Project
+          - WA1_Project
+          - WA2_Project
+          - ""
+        deadline:
+          type: string
+          format: date-time
+        completed:
+          type: integer
+          minimum: 0
+          maximum: 1
+          default: false
+        owner:
+          $ref: '#/components/schemas/assignee'
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/imageLink'
+        links:
+          $ref: '#/components/schemas/links'
+      description: Describes the format of a task sent by the server
+      example:
+        important: false
+        owner:
+          name: name
+          links:
+          - rel: rel
+            href: http://example.com/aeiou
+          - rel: rel
+            href: http://example.com/aeiou
+          aid: 0
+          email: ""
+        private: true
+        images:
+        - rel: rel
+          name: name
+          href: href
+        - rel: rel
+          name: name
+          href: href
+        description: description
+        project: Personal
+        links:
+        - rel: rel
+          href: http://example.com/aeiou
+        - rel: rel
+          href: http://example.com/aeiou
+        completed: false
+        deadline: 2000-01-23T04:56:07.000+00:00
+        tid: 0
+    assignee:
+      required:
+      - aid
+      - email
+      type: object
+      properties:
+        aid:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        activeTask:
+          type: integer
+          minimum: 0
+          maximum: 1
+        links:
+          $ref: '#/components/schemas/links'
+      description: Describes what information about an assignee the server sends to
+        the client
+      example:
+        name: name
+        links:
+        - rel: rel
+          href: http://example.com/aeiou
+        - rel: rel
+          href: http://example.com/aeiou
+        aid: 0
+        email: ""
+    assignees:
+      uniqueItems: true
+      type: array
+      description: Describes an array of Assignees sent to the client
+      items:
+        $ref: '#/components/schemas/assignee'
+    loginInfo:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          maxLength: 20
+          minLength: 6
+          type: string
+      description: Used to validate the login credentials during POST /sessions
+    tid_images_body:
+      type: object
+      properties:
+        schema:
+          $ref: '#/components/schemas/image'
+    inline_response_200:
+      type: object
+      properties:
+        rel:
+          type: string
+          format: uri
+        href:
+          type: string
+          format: uri
+      example:
+        rel: http://example.com/aeiou
+        href: http://example.com/aeiou
+    users_uid_body:
+      type: object
+      properties:
+        TaskId:
+          minimum: 0
+          type: integer
+    api_tasks_body:
+      type: object
+      properties:
+        newTask:
+          $ref: '#/components/schemas/newTask'
+    inline_response_200_1:
+      type: object
+      properties:
+        id:
+          minimum: 0
+          type: integer
+        name:
+          minimum: 1
+          type: string
+        email:
+          type: string
+          format: email
+      example:
+        name: name
+        id: 0
+        email: ""
+    links_inner:
+      required:
+      - href
+      - rel
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+        rel:
+          type: string
+      example:
+        rel: rel
+        href: http://example.com/aeiou

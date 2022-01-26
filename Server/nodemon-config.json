@@ -1,0 +1,14 @@
+{
+    "verbose": true,
+    "ignore": [
+      ".swagger-codegen/*", 
+      "api/*", 
+      "dao/database.db", 
+      "node_modules/*", 
+      "package.json", 
+      "README.md", 
+      "start.sh", 
+      "steps.txt", 
+      "package-lock.json", 
+      ".swagger-codegen-ignore"]
+  }
