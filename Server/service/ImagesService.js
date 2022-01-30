@@ -12,8 +12,7 @@ exports.addImageToTask = async function (tid, image) {
   console.log(tid)//delete this
   return await taskDao.addImageToTask(tid, image)
     .then((res) => {
-      console.log("resolved with result: ", res)
-      return new Promise((resolve, reject) => resolve())
+      return new Promise((resolve, reject) => resolve(res))
     })
     .catch((err) => {
       console.log("an error occurred in service images")

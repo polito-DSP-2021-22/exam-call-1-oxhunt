@@ -3,6 +3,7 @@
 const db = require("./db");
 const sizePage = 10
 const protocol = "../utils/protocol"
+const baseUrl = "localhost:3001/api/"
 
 function getOwnerFromRow(row) { // ho rimosso il self da owner perchè non la considero una risorsa quindi non ha un uri
   return { name: row.name, aid: row.ownerId, email: row.email }
@@ -14,8 +15,9 @@ async function getTaskFromRow(row) {
   images = await exports.getImagesLinksFromTaskId(row.taskId)
 
   const links = [
-    { rel: "self", href: "localhost:8080/api/tasks/" + row.taskId },
-    { rel: "assignedTo", href: "localhost:8080/api/tasks/" + row.taskId + "/assignees/" }
+    { rel: "self", href: baseUrl + "tasks/" + row.taskId },
+    { rel: "assignedTo", href: baseUrl + "tasks/" + row.taskId + "/assignees/" },
+    { rel: "images", href: baseUrl + "tasks/" + row.taskId + "/images/" },
   ]
   const task = {
     important: row.important,
@@ -32,7 +34,7 @@ async function getTaskFromRow(row) {
   return new Promise((resolve, reject) => resolve(task))
 }
 async function createPageItemsFromRows(rows) {
-  
+
   let tasks = [];
   //console.log( await Promise.all(rows.map((row) => getTaskFromRow(row))))
   return await Promise.all(
@@ -45,15 +47,17 @@ const getTaskPageFromRows = async (rows, page, filter) => {
   const totalPages = Math.ceil(nItems * 1.0 / (1.0 * sizePage))
   const nextPage = page + 1;
   const prevPage = page - 1;
-  const baseUrl = "/api/tasks?page="
+  const baseUrl2 = baseUrl + "tasks?page="
   const f = (filter) ? "&filter=" + filter : ""
   let links = [
-    { rel: "self", href: baseUrl + page + f }
+    { rel: "self", href: baseUrl2 + page + f },
+    { rel: "assignments", href: baseUrl + "tasks/assignments/" }
   ];
 
-  if (page < totalPages) links.push({ rel: "next", href: baseUrl + nextPage + f })
-  if (page > 1) links.push({ rel: "prev", href: baseUrl + prevPage + f })
+  if (page < totalPages) links.push({ rel: "next", href: baseUrl2 + nextPage + f })
+  if (page > 1) links.push({ rel: "prev", href: baseUrl2 + prevPage + f })
   return {
+    maxItemsPerPage: sizePage,
     totalItems: nItems,
     pageNumber: page,
     totalPages: totalPages,
@@ -235,7 +239,7 @@ exports.getImagesLinksFromTaskId = async (tid) => {
         }
         if (!rows.length) resolve(null)
         const images = [rows.map(row => {
-          if (row) return { name: row.name, href: "localhost:8080/api/tasks/" + tid + "/images/" + row.iid, rel: "image" }
+          if (row) return { name: row.name, href: baseUrl + "tasks/" + tid + "/images/" + row.iid, rel: "image" }
           else return null
         })]
         resolve(images)
@@ -403,10 +407,10 @@ exports.getAssignees = (userId, tid) => {
         reject(err);
       }
       console.log(rows)//delete this
-      const assignees = [rows.map(row => {
-        const links = [{ 
-          self: "localhost:8080/api/tasks/" + tid + "/assignees/" + row.aid,
-          relatedUser: "localhost:8080/api/users/" + row.aid
+      const assignees = rows.map(row => {
+        const links = [{
+          self: baseUrl + "tasks/" + tid + "/assignees/" + row.aid,
+          relatedUser: baseUrl + "users/" + row.aid
         }]
         return {
           name: row.name,
@@ -414,7 +418,7 @@ exports.getAssignees = (userId, tid) => {
           aid: row.aid,
           links: links
         }
-      })]
+      })
 
       resolve(assignees)
     });
@@ -469,8 +473,22 @@ exports.addImageToTask = function (tid, img) {
           console.log(err);
           reject(err);
         } else {
-          console.log(this.lastID);
-          resolve(this.lastID);
+          if (this.lastID === 0) { // task is already present
+            try {
+              const sql = "SELECT id FROM images WHERE task=? AND mimetype=? AND encoding=? AND name=?"
+              db.get(sql, [tid, img.mimetype, img.encoding, img.originalname], (id)=> {
+                console.log(id);
+                resolve({ href: baseUrl + "tasks/" + tid + "/images/" + id, rel: "attachedImage" });
+              })
+            } catch (e) {
+              console.log(e);
+              reject(e);
+            }
+          }
+          else {
+            console.log(this.lastID);
+            resolve({ href: baseUrl + "tasks/" + tid + "/images/" + this.lastID, rel: "attachedImage" });
+          }
         }
       }
     );
@@ -525,7 +543,7 @@ exports.autoAssignTasks = function (user, counter) {
 }
 
 
-exports.getAllAssignments = ()=>{
+exports.getAllAssignments = () => {
   console.log("inside getAllAssignments")//delete this
 
   const sql = "\
@@ -543,7 +561,7 @@ exports.getAllAssignments = ()=>{
   });
 }
 
-exports.getAllExistingTasks = () =>{
+exports.getAllExistingTasks = () => {
   console.log("inside getAllExistingTasks")//delete this
 
   const sql = "\

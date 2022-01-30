@@ -100,8 +100,7 @@ paths:
     post:
       tags:
       - images
-      description: "Used to attach an image to task. It does not create a new task\
-        \ if another image equal to it, is already attached, it doesn't attach it(idempotent)"
+      description: "Used to attach an image to a specific task."
       operationId: addImageToTask
       parameters:
       - name: tid
@@ -185,7 +184,7 @@ paths:
         "200":
           description: OK
         "401":
-          description: Only logged in users to whom this task is assigned to can perform this operation
+          description: Only logged in users to whom this task has been assigned can perform this operation
         "404":
           description: User or task Not found
         "409":
@@ -466,14 +465,14 @@ paths:
       - tasks
       description: Used to create a new task as specified in the request body. It
         does not create a new task if another task with the exact same attributes
-        except id already exists
+        except id already exists. Returns the link to the task with those attributes
       operationId: createTask
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/api_tasks_body'
+              $ref: '#/components/schemas/newTask'
       responses:
         "200":
           description: OK
@@ -497,7 +496,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_1'
+                $ref: '#/components/schemas/userInfo'
         "401":
           description: Unauthorized
       x-swagger-router-controller: Users
@@ -523,14 +522,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/loginInfo'
+              $ref: '#/components/schemas/loginCredentials'
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_1'
+                $ref: '#/components/schemas/userInfo'
         "401":
           description: Unauthorized
       x-swagger-router-controller: Users
@@ -587,6 +586,9 @@ components:
       type: object
       properties:
         totalItems:
+          minimum: 1
+          type: integer
+        maxItemsPerPage:
           minimum: 1
           type: integer
         totalPages:
@@ -814,7 +816,7 @@ components:
       description: Describes an array of Assignees sent to the client
       items:
         $ref: '#/components/schemas/assignee'
-    loginInfo:
+    loginCredentials:
       required:
       - email
       - password
@@ -847,16 +849,13 @@ components:
         href: http://example.com/aeiou
     users_uid_body:
       type: object
+      required: 
+        - taskId
       properties:
-        TaskId:
+        taskId:
           minimum: 0
           type: integer
-    api_tasks_body:
-      type: object
-      properties:
-        newTask:
-          $ref: '#/components/schemas/newTask'
-    inline_response_200_1:
+    userInfo:
       type: object
       properties:
         id:
@@ -868,6 +867,10 @@ components:
         email:
           type: string
           format: email
+        activeTask:
+            type: integer
+            minimum: 1
+            maximum: 0
       example:
         name: name
         id: 0

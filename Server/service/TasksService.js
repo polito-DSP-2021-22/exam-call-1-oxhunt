@@ -1,8 +1,7 @@
 'use strict';
 const taskDao = require('../dao/task'); // module for accessing the tasks in the DB
 const mqtt = require('../utils/mqtt');
-const MQTTTaskMessage = require('../utils/mqtt_task_message.js');
-
+const baseUrl = "localhost:3001/api/"
 /**
  * used to set a task status to completed, only an assignee of the task can perform it
  *
@@ -14,6 +13,7 @@ exports.completeTask = async function (uid, tid) {
   //completing the task
   return await taskDao.completeTask(uid, tid)
     .then(() => {
+      mqtt.completion(tid, uid)
       return new Promise((resolve, reject) => resolve())
     })
     .catch((err) => {
@@ -32,15 +32,14 @@ exports.completeTask = async function (uid, tid) {
  * no response value expected for this operation
  **/
 exports.deleteTaskById = async function (uid, tid) {
+  const task = taskDao.getTaskById(tid, uid)
   return await taskDao.deleteTask(tid, uid)
     .then(() => {
-      mqtt.publishTaskMessage(tid, new MQTTTaskMessage("deleted", null, null));
-      mqtt.publishTaskMessage(taskId, null); //uncomment if we want to clear the last retained message
-      mqtt.deleteMessage(tid);
+      if(task)mqtt.deletion(tid, !task.private)
       return new Promise((resolve, reject) => resolve())
     })
     .catch((err) => {
-      console.log("an error occurred in service tasks")
+      console.log("an error occurred in service tasks:", err)
       return new Promise((resolve, reject) => reject(err, 500))
     });
 }
@@ -61,7 +60,7 @@ exports.getTaskById = async function (uid, tid) {
       })
     })
     .catch((err) => {
-      console.log("an error occurred in service tasks")
+      console.log("an error occurred in service tasks:", err)
       return new Promise((resolve, reject) => reject(err, 500))
     });
 }
@@ -100,14 +99,12 @@ exports.createTask = async function (body, uid) {
   return await taskDao.createTask(body, uid)
     .then((newTaskId) => {
       //Creation of a new MQTT message for the created task
-      var message = new MQTTTaskMessage("inactive", null, null);
-      mqtt.saveMessage(newTaskId, message);
-      mqtt.publishTaskMessage(newTaskId, message);
-      return new Promise((resolve, reject) => resolve({ href: "localhost:8080/tasks/" + newTaskId, rel: "createdTask" }))
+      mqtt.creation(newTaskId, body)
+      return new Promise((resolve, reject) => resolve({ href: baseUrl + "tasks/" + newTaskId, rel: "createdTask" }))
     })
     .catch((err) => {
       console.log("an error occurred in service tasks", err)//delete this
-      return new Promise((resolve, reject) => reject(err, 500))
+      return new Promise((resolve, reject) => reject("", 500))
     });
 }
 
@@ -124,11 +121,14 @@ exports.updateTask = async function (body, uid, tid) {
   console.log("updating task:", tid, ", to these new values: ", body)//delete this
   return await taskDao.updateTask(tid, body, uid)
     .then(() => {
+      mqtt.update(tid, body)
       return new Promise((resolve, reject) => resolve())
     })
     .catch((err) => {
-      console.log("an error occurred in service tasks")
+      console.log("an error occurred in service tasks:", err)
       return new Promise((resolve, reject) => reject(err, 500))
     });
 }
+
+
 

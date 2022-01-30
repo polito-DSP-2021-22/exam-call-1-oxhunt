@@ -14,8 +14,8 @@ const Navigation = (props) => {
       </Navbar.Brand>
 
       <Nav className="mr-auto">
-          <Nav.Link as={NavLink} to="/tasks" onClick = {() => props.getInitialTasks()}>My Tasks</Nav.Link> 
-          <Nav.Link as={NavLink} to="/public" onClick = {() => props.getPublicTasks()}> Public Tasks</Nav.Link> 
+          <Nav.Link as={NavLink} to="/tasks">My Tasks</Nav.Link> 
+          <Nav.Link as={NavLink} to="/public" > Public Tasks</Nav.Link> 
           <Nav.Link as={NavLink} to="/online" > Online</Nav.Link> 
           <Nav.Link as={NavLink} to="/assignment" > Assignment</Nav.Link> 
         </Nav>

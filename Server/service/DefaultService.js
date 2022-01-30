@@ -1,6 +1,6 @@
 'use strict';
 
-
+const baseUrl = "localhost:3001/api/"
 /**
  * Retrieves the index containing the links to Important Resources
  *
@@ -10,10 +10,10 @@ exports.getIndex = function(isAuthenticated) {
   console.log("isAuthenticated:", isAuthenticated)
   return new Promise(function(resolve, reject) {
     var links = []
-    if (!isAuthenticated) links.push({ href: "/api/users/session", rel: "login" })
-    links.push({ href: "/api/tasks", rel: "tasks" })
-    links.push({ href: "/api/users", rel: "users" })
-    links.push({ href: "/api/", rel: "self" })
+    if (!isAuthenticated) links.push({ href: baseUrl + "users/session", rel: "login" })
+    links.push({ href: baseUrl + "tasks", rel: "tasks" })
+    links.push({ href: baseUrl + "users", rel: "users" })
+    links.push({ href: baseUrl + "", rel: "self" })
     resolve({ links: links });
   });
 }

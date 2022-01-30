@@ -1,19 +1,28 @@
 
-import React,{ useEffect } from 'react';
+import React from 'react';
 import _ from 'lodash'
 import { Dropdown } from 'semantic-ui-react'
 import Button from 'react-bootstrap/Button';
+import API from "../API.js"
 
 const Assignments = (props) => {
   
-  let { OwnedTaskList, getAllOwnedTasks, UserList, getUsers, assignTask, removeAssignTask} = props;
+  let { OwnedTaskList, UserList, handleErrors} = props;
   let tasksArray = [];
   let userId="-1";
 
-  useEffect(() => {
-      getUsers();
-      getAllOwnedTasks();
-  }, [getAllOwnedTasks,getUsers]);
+
+  const assignTask = (userId, tasksId) => {
+    for (var i = 0; i < tasksId.length; i++) {
+      API.assignTask(Number(userId), tasksId[i]).catch(e => handleErrors(e));;
+    }
+  }
+
+  const removeAssignTask = (userId, tasksId) => {
+    for (var i = 0; i < tasksId.length; i++) {
+      API.removeAssignTask(Number(userId), tasksId[i]).catch(e => handleErrors(e));;
+    }
+  }
   
   
   const usersOptions = _.map(UserList, (id, index) => {

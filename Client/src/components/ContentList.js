@@ -88,12 +88,13 @@ const TaskRowControl = (props) => {
 
 
 const ContentList = (props) => {
-  const { tasks, onDelete, onEdit, onCheck, onComplete, filter, getTasks, assignedTaskList } = props;
+  const { tasks, onDelete, onEdit, onCheck, onComplete, filter, refresh, assignedTaskList } = props;
 
 
   // handle change event
   const handlePageChange = pageNumber => {
-    getTasks(filter, pageNumber);
+    localStorage.setItem('currentPage', pageNumber)
+    refresh(true)
   }
 
 

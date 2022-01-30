@@ -2,7 +2,7 @@ import {ListGroup} from 'react-bootstrap/';
 
 /* get the list of labels to show, the one that is selected and the handler to notify a new selection */
 const Filters = (props) => {
-  const {items, onSelect} = props;
+  const {items, history} = props;
 
   return (
     <ListGroup as="div" variant="flush" defaultActiveKey={props.defaultActiveKey} >
@@ -11,7 +11,7 @@ const Filters = (props) => {
             return (
               <ListGroup.Item as="a" 
               key={key} action active={key === props.defaultActiveKey} 
-              onClick={() => onSelect(key)}>{label}</ListGroup.Item>
+              onClick={() => history.push("/list/"+key)}>{label}</ListGroup.Item>
             );
           })
         }

@@ -9,6 +9,9 @@ import User from './components/User';
 
 const BASEURL = '/api/';
 
+
+
+
 function getJson(httpResponsePromise) {
   return new Promise((resolve, reject) => {
     httpResponsePromise
@@ -40,22 +43,24 @@ const getTasks = async (filter, page) => {
     fetch(url)
   ).then(json => {
 
+    const tasks = json.pageItems.map((task) => Object.assign({}, task,
+      { deadline: task.deadline && dayjs(task.deadline) },
+      { id: task.tid }
+    ));
+
     localStorage.setItem('totalPages', json.totalPages);
     localStorage.setItem('currentPage', json.pageNumber);
     localStorage.setItem('totalItems', json.totalItems);
-    const tasksJson = json.pageItems;
-    
-    return tasksJson.map((task) => Object.assign({}, task, 
-      { deadline: task.deadline && dayjs(task.deadline) }, 
-      { id: task.tid }
-    ))
+    localStorage.setItem('maxSizePage', json.maxItemsPerPage)
+
+    return tasks
   })
 }
 
 
 const getPublicTasks = async (page) => {
   if (page === undefined) page = 0;
-  console.log("getPublicTasks: page " + page) /*delete this*/
+
   let url = BASEURL + 'tasks?filter=public';
   if (page) {
     url += "&page=" + page;
@@ -65,13 +70,18 @@ const getPublicTasks = async (page) => {
     fetch(url)
   ).then(json => {
 
+    const tasks = json.pageItems.map((task) => Object.assign({}, task,
+      { deadline: task.deadline && dayjs(task.deadline) },
+      { id: task.tid }
+    ));
+
     localStorage.setItem('totalPages', json.totalPages);
     localStorage.setItem('currentPage', json.pageNumber);
     localStorage.setItem('totalItems', json.totalItems);
+    localStorage.setItem('maxSizePage', json.maxItemsPerPage)
     
-    const tasksJson = json.pageItems;
-    
-    return tasksJson.map((task) => Object.assign({}, task, { deadline: task.deadline && dayjs(task.deadline) }, { id: task.tid }))
+
+    return tasks
   })
 
 }
@@ -79,9 +89,9 @@ const getPublicTasks = async (page) => {
 
 
 async function getAllOwnedTasks() {
-  
+
   console.log("getAllOwnedTasks") /*delete this*/
-  
+
   let url = BASEURL + '/tasks?filter=owned';
   let allTasks = [];
   let finished = false;
@@ -114,10 +124,12 @@ async function getAllOwnedTasks() {
   }
 
   return allTasks;
-  
+
 }
 
 function addTask(task) {
+  task.important = task.important ? 1 : 0;
+  task.private = task.private ? 1 : 0;
   console.log("addTask: ") /*delete this*/
   return getJson(
     fetch(BASEURL + "/tasks", {
@@ -132,6 +144,9 @@ function addTask(task) {
 
 function updateTask(task) {
   console.log("updateTask: task: ", task) /*delete this*/
+  task.important = task.important ? 1 : 0;
+  task.private = task.private ? 1 : 0;
+
   return fetch(BASEURL + "/tasks/" + task.id, {
     method: 'PUT',
     headers: {
@@ -161,18 +176,18 @@ async function completeTask(task) {
 }
 
 async function selectTask(task, userId) {
-  
+
   console.log("select Task: " + task.id) /*delete this*/
   const response = await fetch(BASEURL + "/users/" + userId, {
     method: 'POST', headers: { 'Content-Type': 'application/json', },
-    body: JSON.stringify({TaskId:task.id})
+    body: JSON.stringify({ taskId: task.id })
   });
   if (!response.ok) {
     console.log(response)
     let status = response.status;
     let err
-    if(status===409)err={error:"That task has already been selected by another user"}
-    else if(status===500)err={error:"Internal server error"}
+    if (status === 409) err = { error: "That task has already been selected by another user" }
+    else if (status === 500) err = { error: "Internal server error" }
     throw err;
   }
 }
@@ -189,13 +204,13 @@ async function logIn(credentials) {
   if (response.ok) {
     const user = await response.json();
     console.log("login performed successfully: ", user)
-    localStorage.setItem('activeTask',user.activeTask)
+    localStorage.setItem('activeTask', user.activeTask)
     return user;
   }
-  else if(response.status>=400 && response.status<500){
+  else if (response.status >= 400 && response.status < 500) {
     throw new Error("Invalid Login Credentials")
   }
-  else if(response.status>=500) {
+  else if (response.status >= 500) {
     throw new Error("Server is Unreachable")
   }
   else {
@@ -215,13 +230,13 @@ async function getUserInfo() {
     const response = await fetch(BASEURL + "users/session");
     if (response.ok) {
       const user = await response.json();
-      localStorage.setItem('activeTask',user.activeTask)
+      localStorage.setItem('activeTask', user.activeTask)
       return user;
     } else {
       return false
     }
   }
-  catch(e){
+  catch (e) {
     return false
   }
 }
@@ -265,7 +280,7 @@ async function assignTask(userId, taskId) {
 async function removeAssignTask(userId, taskId) {
   console.log("removeAssignTask: " + userId + ", " + taskId) /*delete this*/
   return new Promise((resolve, reject) => {
-    
+
     fetch(BASEURL + "/tasks/" + taskId + "/assignees/" + userId, {
       method: 'DELETE'
     }).then((response) => {

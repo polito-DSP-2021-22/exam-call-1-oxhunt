@@ -58,8 +58,8 @@ app.delete("/api/users/session/", passport.authenticate('jwt', { session: false 
 app.get("/api/users/session/", passport.authenticate('jwt', { session: false }))
 //users
 app.post("/api/users/:uid",  identifyUser, m.taskIsActiveForAnotherUser)
-app.get("/api/users",  /*passport.authenticate('jwt', { session: false })*/)
-app.get("/api/users/:uid",  /*passport.authenticate('jwt', { session: false })*/)
+app.get("/api/users",  identifyUser)
+app.get("/api/users/:uid",  identifyUser)
 //tasks:tid
 app.post("/api/tasks/:tid",  passport.authenticate('jwt', { session: false }),m.taskExists, m.isAssignee)
 app.get("/api/tasks/:tid",  passport.authenticate('jwt', { session: false })) 

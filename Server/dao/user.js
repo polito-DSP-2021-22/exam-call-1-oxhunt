@@ -2,7 +2,7 @@
 
 const bcrypt = require("bcrypt");
 const db = require("./db");
-
+const baseUrl = "localhost:3001/api/"
 //instead of admin => user
 //instead of aid => id
 //property name has been added
@@ -23,7 +23,7 @@ exports.getUserById = (uid) => {
                 return reject("Not Found", 404)
             }
 
-            const links = [{ self: "localhost:8080/api/users/" + uid }]
+            const links = [{ self: baseUrl + "users/" + uid }]
             const user = {
                 name: r.name,
                 email: r.email,
@@ -90,7 +90,7 @@ exports.getUsers = () => {
             }
             
             const users = rows.map(row => {
-                const links = [{ self: "localhost:8080/api/users/" + row.uid }]
+                const links = [{ self: baseUrl + "users/" + row.uid }]
                 return {
                     name: row.name,
                     email: row.email,

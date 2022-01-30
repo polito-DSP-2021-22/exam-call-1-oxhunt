@@ -92,7 +92,7 @@ const ModalForm = (props) => {
           </Form.Group>
           <Form.Group controlId="form-project">
               <Form.Label>Project</Form.Label>
-              <Form.Control type="text" name="project" placeholder="Enter a new task project" value = {taskProject} onChange={(ev) => setTaskProject(ev.target.value)}/>
+              <Form.Control type="text" name="project" placeholder="Enter a new task project" /*value = {taskProject}*/ onChange={(ev) => setTaskProject(ev.target.value)}/>
           </Form.Group>
           <Form.Group controlId="form-is-important">
             <Form.Check custom type="checkbox" label="Important" name="isImportant" checked={isImportant} onChange={(ev) => setIsImportant(ev.target.checked)} />

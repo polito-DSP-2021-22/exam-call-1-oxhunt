@@ -44,18 +44,21 @@ const TaskRowData = (props) => {
 
 
 const PublicList = (props) => {
-  const { tasks, getTasks } = props;
+  const { tasks, refresh } = props;
+
 
 
   // handle change event
   const handlePageChange = pageNumber => {
-      getTasks(pageNumber);
+      localStorage.setItem("currentPage", pageNumber)
+      refresh(true);
   }
 
 
   return (
     <>
       <ListGroup as="ul" variant="flush">
+       
         {
           tasks.map(t => {
             return (
@@ -70,11 +73,11 @@ const PublicList = (props) => {
           itemClass="page-item" // add it for bootstrap 4
           linkClass="page-link" // add it for bootstrap 4
           activePage={parseInt(localStorage.getItem("currentPage"))}
-          itemsCountPerPage={parseInt(localStorage.getItem("totalItems")/localStorage.getItem("totalPages"))}
+          itemsCountPerPage={parseInt(localStorage.getItem("totalItems"))/parseInt(localStorage.getItem("totalPages"))}
           totalItemsCount={parseInt(localStorage.getItem("totalItems"))}
           pageRangeDisplayed={10}
           onChange={handlePageChange}
-          pageSize ={parseInt(localStorage.getItem("totalPages"))}
+          pageSize ={parseInt(localStorage.getItem("totalPages")) }
       />
     </>
   )

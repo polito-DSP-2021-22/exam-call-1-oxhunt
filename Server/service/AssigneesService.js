@@ -2,8 +2,6 @@
 const taskDao = require('../dao/task'); // module for accessing the tasks in the DB
 const userDao = require('../dao/user')
 const protocol = require('../utils/protocol')
-const mqtt = require('../utils/mqtt');
-const MQTTTaskMessage = require('../utils/mqtt_task_message.js');
 
 /**
  * Used by the owner of the task to add a new assignee to it

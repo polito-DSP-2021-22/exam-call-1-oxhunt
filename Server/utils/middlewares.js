@@ -14,7 +14,7 @@ const cookieExtractor = function (req) {
 
 exports.taskIsActiveForAnotherUser = (req, res, next) => {
     const uid = req.openapi.pathParams.uid;
-    const tid = req.openapi.swaggerParameters[3].TaskId
+    const tid = req.openapi.swaggerParameters[3].taskId
     console.log("inside taskIsActiveForAnotherUser: uid:", uid, ", tid:", tid)//delete this
     if (!tid || !uid) return next()
     userDao.getUsers()

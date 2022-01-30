@@ -1,12 +1,28 @@
 import { Form, Button, Alert, Modal } from 'react-bootstrap';
 import { useState } from 'react';
 
+
+
 function LoginForm(props) {
+  const {setUser, setLoggedIn, API} = props
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const doLogIn = async (credentials) => {
+    try {
+      const user = await API.logIn(credentials);
+  
+      setUser(user);
+      setLoggedIn(true);
+    }
+    catch (err) {
+      // error is handled and visualized in the login form, do not manage error, throw it
+      throw err;
+    }
+  }
+  
   const handleSubmit = (event) => {
     event.preventDefault();
     setErrorMessage('');
@@ -22,7 +38,7 @@ function LoginForm(props) {
 
     if(valid)
     {
-      props.login(credentials)
+      doLogIn(credentials)
         .catch( (e) => { setErrorMessage(e.message); setShow(true); } )
     }
 
