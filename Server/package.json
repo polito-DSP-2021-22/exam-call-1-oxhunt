@@ -13,22 +13,22 @@
   "license": "Unlicense",
   "private": true,
   "dependencies": {
-    "@grpc/proto-loader": "^0.6.7",
+    "@grpc/proto-loader": "^0.6.9",
     "bcrypt": "^5.0.1",
     "connect": "^3.2.0",
     "grpc": "^1.24.11",
-    "js-yaml": "^3.3.0",
+    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
     "mqtt": "^4.3.4",
-    "multer": "^1.4.3",
+    "multer": "^1.4.4",
     "nodemon": "^2.0.15",
-    "oas3-tools": "^2.0.2",
-    "passport": "^0.5.0",
+    "oas3-tools": "^2.2.3",
+    "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "sqlite3": "^5.0.2",
     "websocket": "^1.0.34",
-    "ws": "^8.4.0"
+    "ws": "^8.4.2"
   },
   "_id": "todo-manager-api@1.0"
 }
