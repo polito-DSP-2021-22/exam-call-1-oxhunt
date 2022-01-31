@@ -66,7 +66,7 @@ module.exports.checkAuthorization = async function (req, res, next) {
       name: user.name,
       activeTask: user.activeTask
     }
-
+    protocol.login(user, task)
     utils.writeJson(res, response);
   }
   catch (response) {

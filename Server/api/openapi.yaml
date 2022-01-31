@@ -116,14 +116,14 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/tid_images_body'
+              $ref: '#/components/schemas/image'
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200'
+                $ref: '#/components/schemas/link'
         "401":
           description: You must be logged in to perform this action
         "404":
@@ -179,7 +179,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/users_uid_body'
+              $ref: '#/components/schemas/taskId'
       responses:
         "200":
           description: OK
@@ -222,7 +222,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200'
+                $ref: '#/components/schemas/link'
         "401":
           description: You must be logged in to perform this action
       x-swagger-router-controller: Assignments
@@ -479,7 +479,7 @@ paths:
           content:
             application/json:
                 schema:
-                  $ref: '#/components/schemas/inline_response_200'
+                  $ref: '#/components/schemas/link'
         "401":
           description: You must be logged in to perform this action
       x-swagger-router-controller: Tasks
@@ -503,7 +503,7 @@ paths:
     delete:
       tags:
       - users
-      description: "used to either logout, works only if the request has a valid jwt cookie"
+      description: "used to logout, works only if the request has a valid jwt cookie"
       operationId: logout
       parameters: []
       responses:
@@ -515,7 +515,7 @@ paths:
     post:
       tags:
       - users
-      description: "used to either login, login is performed with the credentials sent in the body"
+      description: "used to login, login is performed with the credentials sent in the body"
       operationId: login
       parameters: []
       requestBody:
@@ -550,9 +550,11 @@ components:
   schemas:
     image:
       type: string
+      description: Describes the schema of an image
       format: binary
     imageLink:
       type: object
+      description: Describe the structure of a link which points to an image resource
       properties:
         href:
           type: string
@@ -569,13 +571,13 @@ components:
       description: Used to validate the format of the links sent alongside the resources
       format: uri
       items:
-        $ref: '#/components/schemas/links_inner'
+        $ref: '#/components/schemas/link'
     index:
       type: object
       properties:
         links:
           $ref: '#/components/schemas/links'
-      description: Describes the format of the index object
+      description: Describes the format of the index object, which contains all the links to the most important resources
       example:
         links:
         - rel: rel
@@ -584,6 +586,7 @@ components:
           href: http://example.com/aeiou
     tasksPage:
       type: object
+      description: Page containing an array of tasks
       properties:
         totalItems:
           minimum: 1
@@ -604,7 +607,6 @@ components:
             $ref: '#/components/schemas/task'
         links:
           $ref: '#/components/schemas/links'
-      description: Describes the format of the task pages sent by the server
       example:
         totalItems: 1
         pageNumber: 1
@@ -675,6 +677,7 @@ components:
       required:
       - description
       type: object
+      description: Schema validating the information of a task received from a client when he wants to create a task
       properties:
         description:
           maxLength: 160
@@ -700,14 +703,13 @@ components:
         deadline:
           type: string
           format: date-time
-      description: Used to validate the task object received during either a task
-        creation or a task update
     task:
       required:
       - description
       - owner
       - tid
       type: object
+      description: Schema describing the structure of a task
       properties:
         tid:
           minimum: 0
@@ -749,7 +751,6 @@ components:
             $ref: '#/components/schemas/imageLink'
         links:
           $ref: '#/components/schemas/links'
-      description: Describes the format of a task sent by the server
       example:
         important: false
         owner:
@@ -784,6 +785,7 @@ components:
       - aid
       - email
       type: object
+      description: Describes the format of the complete information regarding a user
       properties:
         aid:
           minimum: 0
@@ -799,8 +801,6 @@ components:
           maximum: 1
         links:
           $ref: '#/components/schemas/links'
-      description: Describes what information about an assignee the server sends to
-        the client
       example:
         name: name
         links:
@@ -813,7 +813,7 @@ components:
     assignees:
       uniqueItems: true
       type: array
-      description: Describes an array of Assignees sent to the client
+      description: Describes an array of Assignees/Users sent to the client
       items:
         $ref: '#/components/schemas/assignee'
     loginCredentials:
@@ -830,33 +830,18 @@ components:
           minLength: 6
           type: string
       description: Used to validate the login credentials during POST /sessions
-    tid_images_body:
+    taskId:
       type: object
-      properties:
-        schema:
-          $ref: '#/components/schemas/image'
-    inline_response_200:
-      type: object
-      properties:
-        rel:
-          type: string
-          format: uri
-        href:
-          type: string
-          format: uri
-      example:
-        rel: http://example.com/aeiou
-        href: http://example.com/aeiou
-    users_uid_body:
-      type: object
+      description: Simple object containing the taskId of a task
       required: 
         - taskId
       properties:
         taskId:
-          minimum: 0
+          minimum: 1
           type: integer
     userInfo:
       type: object
+      description: Subset of the total information about the user, used in some responses to the client
       properties:
         id:
           minimum: 0
@@ -870,12 +855,11 @@ components:
         activeTask:
             type: integer
             minimum: 1
-            maximum: 0
       example:
         name: name
         id: 0
         email: ""
-    links_inner:
+    link:
       required:
       - href
       - rel

@@ -5,7 +5,8 @@ const taskDao = require('../dao/task');
 const userDao = require('../dao/user')
 const { MQTTPublicTaskMessage, MQTTSelectionMessage } = require('./mqtt_task_message.js');
 
-const host = 'ws://127.0.0.1:8086';
+//const host = 'ws://127.0.0.1:8086';
+const host = 'tcp://127.0.0.1:1883';
 const clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8);
 
 const options = {
@@ -24,6 +25,20 @@ const options = {
 };
 const mqtt_connection = mqtt.connect(host, options);
 
+
+const getQos = (topic) => {
+  const isSelectionTopic = RegExp("tasks/selection/")
+  const isPublicTopic = RegExp("tasks/public/")
+  if (isSelectionTopic.test(topic)) {
+    return 1
+  }
+  else if (isPublicTopic.test(topic)) {
+    return 2;
+  }
+  else {
+    throw new Error("cannot publish a topic called: ", topic)
+  }
+}
 
 async function uploadTaskSelectionsInfo(userDao, taskDao) {
   // get all users who have an active task
@@ -49,8 +64,8 @@ async function uploadTaskSelectionsInfo(userDao, taskDao) {
     const status = (selection.userId) ? "active" : "inactive";
     const message = new MQTTSelectionMessage(status, selection.userId, selection.username);
     //taskMessageMap.set(selection.tid, message);
-    console.log("mqtt publish, topic: ", "tasks/selection/"+selection.tid, ", message: ", JSON.stringify(message))
-    mqtt_connection.publish(topic, JSON.stringify(message), { qos: 0, retain: true });
+    console.log("mqtt publish, topic: ", "tasks/selection/" + selection.tid, ", message: ", JSON.stringify(message))
+    mqtt_connection.publish(topic, JSON.stringify(message), { qos: getQos(topic), retain: true });
   });
 }
 
@@ -84,7 +99,7 @@ mqtt_connection.on('close', function () {
 
 module.exports.publishTaskMessage = function publishTaskMessage(topic, message, retain) {
   console.log("publishing message MQTT: ", topic, ", ", message)
-  mqtt_connection.publish(topic, JSON.stringify(message), { qos: 0, retain: retain})
+  mqtt_connection.publish(topic, JSON.stringify(message), { qos: getQos(topic), retain: retain })
 };
 
 module.exports.deletion = function (tid, isPublic) {
@@ -134,11 +149,11 @@ module.exports.update = function (tid, body) {
   // if the newly created task is public, or has changed from public to private publish it
   if (body.private) return module.exports.deletion(tid, true);
   const message = new MQTTPublicTaskMessage("update", { ...body, tid: tid })
-  module.exports.publishTaskMessage("tasks/public/" + tid, message,false);
+  module.exports.publishTaskMessage("tasks/public/" + tid, message, false);
 }
 
 module.exports.taskSelection = function (tid, userId, username, status) {
   const message = new MQTTSelectionMessage(status, userId, username);
 
-  module.exports.publishTaskMessage("tasks/selection/" +tid, message, true);
+  module.exports.publishTaskMessage("tasks/selection/" + tid, message, true);
 }

@@ -77,7 +77,6 @@ const Main = () => {
   useEffect(() => {
     if (!dirty) return;
     if (location.pathname === "/public") {
-      console.log("public")
       API.getPublicTasks(localStorage.getItem('currentPage'))
         .then(tasks => {
           differentialSubscribe([], "tasks/selection/")
@@ -169,63 +168,67 @@ const Main = () => {
 
   }, []);
 
+  const handlePages = (operation) => {
+    const maxSizePage = localStorage.getItem("maxSizePage")
+    const currentPage = localStorage.getItem("currentPage")
+    const totalPages = localStorage.getItem("totalPages")
+    const totalItems = parseInt(localStorage.getItem("totalItems"))
+    if (operation === "deletion") {
+      console.log(totalItems, maxSizePage * (totalPages - 1))
+      if (totalItems - 1 <= maxSizePage * (totalPages - 1)) {
+        if (currentPage >= totalPages) {
+          localStorage.setItem("currentPage", (currentPage - 1) ? currentPage - 1 : currentPage)
+        }
+        setDirty(true)
+        return 1
+      }
+      localStorage.setItem("totalItems", totalItems - 1)
+      return 0
+    }
+    else if (operation === "creation") {
+      if (totalItems + 1 > maxSizePage * totalPages) {
+        console.log("dirty because: ", totalItems + 1 + " > " + maxSizePage * totalPages)
+        setDirty(true)
+        return 1
+      }
+      localStorage.setItem("totalItems", totalItems + 1)
+      // only add the task if on the last page
+      if (currentPage !== totalPages) return 1
+    }
+  }
   useEffect(() => {
     const updatePublicTasksInfo = (topic, parsedMessage) => {
 
-      const taskId = topic.split("/")[2];
+      const taskId = parseInt(topic.split("/")[2]);
+      const message = {
+        important: parsedMessage.important,
+        id: taskId,
+        description: parsedMessage.description,
+        private: parsedMessage.private,
+        project: parsedMessage.project,
+        completed: parsedMessage.completed,
+        deadline: parsedMessage.deadline && dayjs(parsedMessage.deadline)
+      }
 
       let tlist = taskListRef.current;
       if (!tlist.length) return;
 
       if (parsedMessage.operation === "deletion") {
-        const lengthBefore = tlist.length
-        tlist = tlist.filter(t => t.id !== parseInt(taskId))
-
-        const maxSizePage = localStorage.getItem("maxSizePage")
-        const currentPage = localStorage.getItem("currentPage")
-        const totalPages = localStorage.getItem("totalPages")
-        const totalItems = parseInt(localStorage.getItem("totalItems")) + (tlist.length - lengthBefore)
-
-        console.log(totalItems, maxSizePage * (totalPages - 1))
-        if (totalItems <= maxSizePage * (totalPages - 1)) {
-          console.log("inside reload: ", currentPage, totalPages)
-          if (currentPage >= totalPages) localStorage.setItem("currentPage", (currentPage - 1) ? currentPage - 1 : currentPage)
-          setDirty(true)
-          return
-        }
-        localStorage.setItem("totalItems", totalItems)
+        tlist = tlist.filter(t => t.id !== taskId)
+        if (handlePages("deletion")) return
         setTaskList(tlist)
       }
       else if (parsedMessage.operation === "update") {
-        parsedMessage.deadline = parsedMessage.deadline && dayjs(parsedMessage.deadline)
-        tlist = tlist.filter(t => t.id !== parseInt(taskId));
-        tlist.push(parsedMessage)
+        tlist = tlist.filter(t => t.id !== taskId);
+        tlist.push(message)
         setTaskList(tlist)
       }
       else if (parsedMessage.operation === "creation") {
-        console.log(parsedMessage)///
-        const lengthBefore = tlist.length
-        tlist = tlist.filter(t => t.id !== parseInt(taskId));
-        parsedMessage.deadline = parsedMessage.deadline && dayjs(parsedMessage.deadline)
+        tlist = tlist.filter(t => t.id !== taskId);
 
-        const maxSizePage = localStorage.getItem("maxSizePage")
-        const currentPage = localStorage.getItem("currentPage")
-        const totalPages = localStorage.getItem("totalPages")
+        if (handlePages("creation")) return;
 
-        const totalItems = parseInt(localStorage.getItem("totalItems")) + 1 + tlist.length - lengthBefore
-
-        if (totalItems > maxSizePage * totalPages) {
-          console.log("dirty because:", totalItems, maxSizePage * totalPages)
-          setDirty(true)
-          return
-        }
-        localStorage.setItem("totalItems", totalItems)
-        // only add the task if on the last page and 
-        //if (tlist.length >= maxSizePage) return
-
-        if (currentPage !== totalPages) return
-        tlist.push(parsedMessage)
-        console.log(tlist)
+        tlist.push(message)
         setTaskList(tlist)
       }
     }
@@ -249,9 +252,9 @@ const Main = () => {
         // if last task of the page, 
         if (taskList.length - 1 === 0) {
           const currentPage = localStorage.getItem("currentPage")
-          localStorage.setItem("currentPage", (currentPage - 1)?currentPage-1:currentPage)
+          localStorage.setItem("currentPage", (currentPage - 1) ? currentPage - 1 : currentPage)
         }
-        setDirty(true)        
+        setDirty(true)
       })
       .catch(e => handleErrors(e))
   }

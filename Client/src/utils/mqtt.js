@@ -1,6 +1,9 @@
 var mqtt = require('mqtt')
 var clientId = 'mqttjs_' + Math.random().toString(16).substr(2, 8)
 
+
+
+
 var options = {
   keepalive: 30,
   clientId: clientId,
@@ -22,6 +25,18 @@ const isSelectionTopic = RegExp("tasks/selection/")
 const isPublicTopic = RegExp("tasks/public/")
 let subscribedToPublic = false
 
+
+const getQos = (topic)=> {
+  if(isSelectionTopic.test(topic)){
+    return 1
+  }
+  else if(isPublicTopic.test(topic)){
+    return 2;
+  }
+  else{
+    throw new Error("cannot publish a topic called: ", topic)
+  }
+}
 /*
 const unsubscribe = () => {
   if (subscriptions.length > 0) {
@@ -50,7 +65,7 @@ const differentialSubscribe = (tasks, topic) => {
   //console.log("subscriptions: ", subscriptions, "\n requiredSubscriptions :", requiredSubscriptions)
   // remove all unnecessary subscriptions
   unsubscribeList.forEach(s => {
-    client.unsubscribe(s, { qos: 0, retain: true }, (err, granted) => {
+    client.unsubscribe(s, { qos: getQos(topic), retain: true }, (err, granted) => {
       if (err) console.log("error:", err, ", granted: ", granted)
     })
     console.log("unsubscribing from: ", s)
@@ -59,7 +74,7 @@ const differentialSubscribe = (tasks, topic) => {
 
   // add all necessary subscriptions
   subscribeList.forEach(s => {
-    client.subscribe(s, { qos: 0, retain: true }, (err, granted) => {
+    client.subscribe(s, { qos: getQos(topic), retain: true }, (err, granted) => {
       if (!err) console.log("subscribed", granted[0])
       if (err) console.log("error:", err, ", granted: ", granted)
     })
@@ -71,7 +86,7 @@ const subscribeToAll = (action, topic) => {
   if(subscribedToPublic && action)return;
   if(!subscribedToPublic && !action)return;
   if(action){
-    client.subscribe(topic + "#", { qos: 0, retain: true }, (err, granted) => {
+    client.subscribe(topic + "#", { qos: getQos(topic), retain: true }, (err, granted) => {
       if (!err) console.log("subscribed", granted[0])
       if (err) console.log("error:", err, ", granted: ", granted)
     })
@@ -79,7 +94,7 @@ const subscribeToAll = (action, topic) => {
   }
   else{
     console.log("unsubscribed from " + topic + "#")
-    client.unsubscribe(topic + "#", { qos: 0, retain: true })
+    client.unsubscribe(topic + "#", { qos: getQos(topic), retain: true })
     subscribedToPublic=false
   }
 }
@@ -97,7 +112,7 @@ const MQTTObject = (displayTaskSelection, updatePublicTasksInfo) => {
   client.on('message', (topic, message) => {
     try {
       var parsedMessage = JSON.parse(message);
-      //console.log("MQTT received message: ", parsedMessage, ", in topic: ", topic)
+      console.log("MQTT received message: ", parsedMessage, ", in topic: ", topic)
       if (isSelectionTopic.test(topic)) {
         if (parsedMessage.status === "deleted") {
           client.unsubscribe(topic);

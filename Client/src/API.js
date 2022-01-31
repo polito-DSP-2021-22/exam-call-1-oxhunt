@@ -113,7 +113,7 @@ async function getAllOwnedTasks() {
       if (!next) {
         finished = true;
       } else {
-        url = next.href;
+        url = next.href.slice(14);
       }
 
     } else {
@@ -146,6 +146,7 @@ function updateTask(task) {
   console.log("updateTask: task: ", task) /*delete this*/
   task.important = task.important ? 1 : 0;
   task.private = task.private ? 1 : 0;
+  task.project = task.project?task.project:""
 
   return fetch(BASEURL + "/tasks/" + task.id, {
     method: 'PUT',
@@ -177,7 +178,6 @@ async function completeTask(task) {
 
 async function selectTask(task, userId) {
 
-  console.log("select Task: " + task.id) /*delete this*/
   const response = await fetch(BASEURL + "/users/" + userId, {
     method: 'POST', headers: { 'Content-Type': 'application/json', },
     body: JSON.stringify({ taskId: task.id })
