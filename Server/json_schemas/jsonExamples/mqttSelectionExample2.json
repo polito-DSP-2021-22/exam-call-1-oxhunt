@@ -1,0 +1,6 @@
+{
+    "$schema": "../SchemaMQTTSelection.json",
+    "status": "active",
+    "userId": 1,
+    "username": "lucio"
+}

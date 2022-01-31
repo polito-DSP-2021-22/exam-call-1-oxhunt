@@ -1,0 +1,10 @@
+{
+    "$schema": "../SchemaMQTTPublic.json",
+    "operation":"creation",
+    "important":1,
+    "id":1,
+    "description":"Just a Description",
+    "private":0,
+    "project":"DSP_Project", 
+    "completed":1
+}

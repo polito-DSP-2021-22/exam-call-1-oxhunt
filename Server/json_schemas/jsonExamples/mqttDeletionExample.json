@@ -1,0 +1,10 @@
+{
+    "$schema": "../SchemaMQTTPublic.json",
+    "operation":"deletion",
+    "important":0,
+    "id":99,
+    "description":"n",
+    "private":1,
+    "project":"DSP_Project", 
+    "completed":0
+}
